@@ -17,24 +17,31 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install build-essential \
-          qt6-multimedia-dev libavcodec-dev libavfilter-dev libavutil-dev dhclient
+        sudo apt install build-essential
+    
+    - name: Install Qt 6
+      run: |
+        git clone https://code.qt.io/qt/qt5.git qt6
+        cd qt6
+        git switch 6.3
+        perl init-repository --module-subset=qtbase,qtmultimedia
+        mkdir qt6-build
+        cd qt6-build
+        ../qt6/configure -prefix $GITHUB_WORKSPACE/AppDir/usr
+        cmake --build .
+        cmake --install .
     
     - name: Configure
       run: |
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/AppDir/usr
+        cmake . -Bbuild -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/AppDir/usr
     
     - name: Build
       run: |
-        cd build
-        cmake --build .
+        cmake --build build
     
     - name: Deploy
       run: |
-        cd build
-        cmake --install .
+        cmake --install build
         cd ..
         cp ../client/com.mattkc.* AppDir/
         curl -fLOSs https://github.com/AppImage/AppImageKit/releases/download/13/AppRun-x86_64

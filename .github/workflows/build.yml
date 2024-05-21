@@ -89,6 +89,7 @@ jobs:
       run: |
         cp server/hostap/conf/wpa_supplicant.config server/hostap/wpa_supplicant/.config
         export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$GITHUB_WORKSPACE/AppDir/usr/lib/pkgconfig
+        export LDFLAGS=-L$GITHUB_WORKSPACE/AppDir/usr/lib
         cmake --build build
     
     - name: Deploy

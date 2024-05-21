@@ -11,12 +11,18 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v4
+      submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        apt update
+        apt install build-essential
     
     - name: Configure
       run: |
         mkdir build
         cd build
-        cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=$(pwd)/AppDir/usr
+        cmake .. -DCMAKE_INSTALL_PREFIX=$(pwd)/AppDir/usr
     
     - name: Build
       run: |

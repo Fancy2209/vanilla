@@ -87,7 +87,9 @@ jobs:
         curl -fLOSs https://github.com/AppImage/AppImageKit/releases/download/13/AppRun-x86_64
         mv AppRun-x86_64 AppDir/AppRun
         chmod +x AppDir/AppRun
-        appimagetool AppDir
+        curl -fLOSs https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+        chmodd +x appimagetool-x86_64.AppImage
+        ./appimagetool-x86_64.AppImage AppDir
     
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.1

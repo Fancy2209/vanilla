@@ -1,0 +1,46 @@
+name: Build
+on:
+  push:
+    branches:
+    - master
+    paths-ignore:
+    - 'README.md'
+  pull_request:
+    branches:
+    - master
+    paths-ignore:
+    - 'README.md'
+jobs:
+  linux:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=$(pwd)/AppDir/usr
+    
+    - name: Build
+      run: |
+        cd build
+        cmake --build .
+    
+    - name: Deploy
+      run: |
+        cd build
+        cmake --install .
+        cp ../client/com.mattkc.* AppDir/
+        curl -fLOSs https://github.com/AppImage/AppImageKit/releases/download/13/AppRun-x86_64
+        mv AppRun-x86_64 AppDir/AppRun
+        chmod +x AppDir/AppRun
+        appimagetool AppDir
+    
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.1
+      with:
+        path:
+          build/Vanilla_U-x86_64.AppImage
+
+      

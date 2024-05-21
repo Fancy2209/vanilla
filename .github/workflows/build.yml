@@ -75,7 +75,7 @@ jobs:
         autoreconf -i
         mkdir build
         cd build
-        ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr
+        ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-debug
         make
         make install
     
@@ -83,6 +83,7 @@ jobs:
     
     - name: Configure
       run: |
+        PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$GITHUB_WORKSPACE/AppDir/usr
         cp server/hostap/conf/wpa_supplicant.config server/hostap/wpa_supplicant/.config
         cmake . -Bbuild -DCMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/AppDir/usr -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/AppDir/usr
     

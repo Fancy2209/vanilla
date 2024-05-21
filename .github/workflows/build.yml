@@ -20,24 +20,16 @@ jobs:
         sudo apt install build-essential ninja-build cmake \
           libgles2-mesa-dev libegl1-mesa-dev nasm
     
-    # - name: Restore cached Primes
-    #   id: cache-primes-restore
-    #   uses: actions/cache/restore@v4
-    #   with:
-    #     path: |
-    #       path/to/dependencies
-    #       some/other/dependencies
-    #     key: ${{ runner.os }}-primes
-    # - name: Save Primes
-    #   id: cache-primes-save
-    #   uses: actions/cache/save@v4
-    #   with:
-    #     path: |
-    #       path/to/dependencies
-    #       some/other/dependencies
-    #     key: ${{ steps.cache-primes-restore.outputs.cache-primary-key }}
+    - name: Restore cached dependencies
+      id: cached-dependencies-restore
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ${{ github.workspace }}/AppDir/usr
+        key: ${{ runner.os }}-x86_64-deps
     
     - name: Install Qt 6
+      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
       run: |
         git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6
         cd qt6
@@ -49,6 +41,7 @@ jobs:
         cmake --install .
     
     - name: Install SDL2
+      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
       run: |
         git clone --branch release-2.30.3 --depth 1 https://github.com/libsdl-org/SDL.git
         cd SDL
@@ -57,14 +50,23 @@ jobs:
         ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr
         make
         make install
-      
+
     - name: Install FFmpeg
+      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
       run: |
         git clone --branch n7.0 --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
         cd ffmpeg
         ./configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-static --disable-avdevice --enable-shared --disable-programs
         make
         make install
+
+    - name: Save cached dependencies
+      id: cached-dependencies-save
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${{ github.workspace }}/AppDir/usr
+        key: ${{ steps.cached-dependencies-restore.outputs.cache-primary-key }}
     
     # Need to get dhclient in there somehow unless we switch to our own implementation
     

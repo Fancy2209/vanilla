@@ -17,13 +17,14 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install build-essential
+        sudo apt install build-essential \
+          qt6-multimedia-dev libavcodec-dev libavfilter-dev libavutil-dev dhclient
     
     - name: Configure
       run: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=$(pwd)/AppDir/usr
+        cmake .. -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/AppDir/usr
     
     - name: Build
       run: |
@@ -34,6 +35,7 @@ jobs:
       run: |
         cd build
         cmake --install .
+        cd ..
         cp ../client/com.mattkc.* AppDir/
         curl -fLOSs https://github.com/AppImage/AppImageKit/releases/download/13/AppRun-x86_64
         mv AppRun-x86_64 AppDir/AppRun
@@ -44,6 +46,6 @@ jobs:
       uses: actions/upload-artifact@v2.2.1
       with:
         path:
-          build/Vanilla_U-x86_64.AppImage
+          Vanilla_U-x86_64.AppImage
 
       

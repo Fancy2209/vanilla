@@ -18,7 +18,8 @@ jobs:
       run: |
         sudo apt update
         sudo apt install build-essential ninja-build cmake \
-          libgles2-mesa-dev libegl1-mesa-dev nasm libnl-3-dev
+          libgles2-mesa-dev libegl1-mesa-dev nasm \
+          libnl-genl-3-dev
     
     - name: Restore cached dependencies
       id: cached-dependencies-restore

@@ -18,19 +18,38 @@ jobs:
       run: |
         sudo apt update
         sudo apt install build-essential ninja-build cmake \
-          libgles2-mesa-dev libegl1-mesa-dev
+          libgles2-mesa-dev libegl1-mesa-dev nasm
     
     - name: Install Qt 6
       run: |
-        git clone git://code.qt.io/qt/qt5.git qt6
+        git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6
         cd qt6
-        git switch 6.7.1
         perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools
         mkdir qt6-build
         cd qt6-build
         ../configure -prefix $GITHUB_WORKSPACE/AppDir/usr
         cmake --build . --parallel
         cmake --install .
+    
+    - name: Install SDL2
+      run: |
+        git clone --branch release-2.30.3 --depth 1 https://github.com/libsdl-org/SDL.git
+        cd SDL
+        mkdir build
+        cd build
+        ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr
+        make
+        make install
+      
+    - name: Install FFmpeg
+      run: |
+        git clone --branch n7.0 --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
+        cd ffmpeg
+        ./configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-static --disable-avdevice --enable-shared --disable-programs
+        make
+        make install
+    
+    # Need to get dhclient in there somehow unless we switch to our own implementation
     
     - name: Configure
       run: |

@@ -20,6 +20,23 @@ jobs:
         sudo apt install build-essential ninja-build cmake \
           libgles2-mesa-dev libegl1-mesa-dev nasm
     
+    # - name: Restore cached Primes
+    #   id: cache-primes-restore
+    #   uses: actions/cache/restore@v4
+    #   with:
+    #     path: |
+    #       path/to/dependencies
+    #       some/other/dependencies
+    #     key: ${{ runner.os }}-primes
+    # - name: Save Primes
+    #   id: cache-primes-save
+    #   uses: actions/cache/save@v4
+    #   with:
+    #     path: |
+    #       path/to/dependencies
+    #       some/other/dependencies
+    #     key: ${{ steps.cache-primes-restore.outputs.cache-primary-key }}
+    
     - name: Install Qt 6
       run: |
         git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6
@@ -53,6 +70,7 @@ jobs:
     
     - name: Configure
       run: |
+        cp server/hostap/conf/wpa_supplicant.config server/hostap/wpa_supplicant/.config
         cmake . -Bbuild -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/AppDir/usr
     
     - name: Build

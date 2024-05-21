@@ -24,12 +24,12 @@ jobs:
       run: |
         git clone https://code.qt.io/qt/qt5.git qt6
         cd qt6
-        git switch 6.3
+        git switch 6.7.1
         perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools
         mkdir qt6-build
         cd qt6-build
         ../configure -prefix $GITHUB_WORKSPACE/AppDir/usr
-        cmake --build .
+        cmake --build . --parallel
         cmake --install .
     
     - name: Configure

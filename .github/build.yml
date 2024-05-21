@@ -11,6 +11,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v4
+      submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        apt update
+        apt install build-essential
     
     - name: Configure
       run: |

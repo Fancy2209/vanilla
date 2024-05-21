@@ -18,8 +18,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install build-essential ninja-build cmake \
-          libgles2-mesa-dev libegl1-mesa-dev nasm \
-          libnl-genl-3-dev desktop-file-utils
+          libgles2-mesa-dev libegl1-mesa-dev nasm desktop-file-utils
     
     - name: Restore cached dependencies
       id: cached-dependencies-restore
@@ -68,6 +67,17 @@ jobs:
         path: |
           ${{ github.workspace }}/AppDir/usr
         key: ${{ steps.cached-dependencies-restore.outputs.cache-primary-key }}
+
+    - name: Install libnl
+      run: |
+        git clone --branch libnl3_9_0 --depth 1 https://github.com/thom311/libnl.git
+        cd libnl
+        autoreconf -i
+        mkdir build
+        cd build
+        ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr
+        make
+        make install
     
     # Need to get dhclient in there somehow unless we switch to our own implementation
     

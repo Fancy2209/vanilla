@@ -60,6 +60,7 @@ add_dependencies(wpa_client wpa_client_build)
 # Link our library with the client library
 target_link_libraries(vanilla PRIVATE
     wpa_client
+    pthread
 )
 
 # Copy files into build directory

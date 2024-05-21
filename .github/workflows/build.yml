@@ -22,7 +22,7 @@ jobs:
     
     - name: Install Qt 6
       run: |
-        git clone https://code.qt.io/qt/qt5.git qt6
+        git clone git://code.qt.io/qt/qt5.git qt6
         cd qt6
         git switch 6.7.1
         perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools

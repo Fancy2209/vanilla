@@ -17,7 +17,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install build-essential ninja-build cmake
+        sudo apt install build-essential ninja-build cmake \
+          libgles2-mesa-dev libegl1-mesa-dev
     
     - name: Install Qt 6
       run: |

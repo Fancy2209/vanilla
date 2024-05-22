@@ -46,7 +46,7 @@ jobs:
         perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools
         mkdir qt6-build
         cd qt6-build
-        ../configure -prefix $GITHUB_WORKSPACE/AppDir/usr
+        ../configure -prefix $GITHUB_WORKSPACE/AppDir/usr -xcb
         cmake --build . --parallel
         cmake --install .
     

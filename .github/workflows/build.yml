@@ -78,6 +78,7 @@ jobs:
         make install
 
     - name: Install libnl
+      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
       run: |
         git clone --branch libnl3_9_0 --depth 1 https://github.com/thom311/libnl.git
         cd libnl
@@ -89,6 +90,7 @@ jobs:
         make install
 
     - name: Save cached dependencies
+      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
       id: cached-dependencies-save
       uses: actions/cache/save@v4
       with:

@@ -27,6 +27,15 @@ jobs:
         path: |
           ${{ github.workspace }}/AppDir/usr
         key: ${{ runner.os }}-x86_64-deps
+
+    - name: Install ICU
+      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
+      run: |
+        git clone --branch release-71-1 --depth 1 https://github.com/unicode-org/icu.git
+        cd icu/icu4c/source
+        ./configure --prefix=$GITHUB_WORKSPACE/AppDir/usr
+        make
+        make install
     
     - name: Install Qt 6
       if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
@@ -60,14 +69,6 @@ jobs:
         make
         make install
 
-    - name: Save cached dependencies
-      id: cached-dependencies-save
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          ${{ github.workspace }}/AppDir/usr
-        key: ${{ steps.cached-dependencies-restore.outputs.cache-primary-key }}
-
     - name: Install libnl
       run: |
         git clone --branch libnl3_9_0 --depth 1 https://github.com/thom311/libnl.git
@@ -78,6 +79,14 @@ jobs:
         ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-debug
         make
         make install
+
+    - name: Save cached dependencies
+      id: cached-dependencies-save
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${{ github.workspace }}/AppDir/usr
+        key: ${{ steps.cached-dependencies-restore.outputs.cache-primary-key }}
     
     # Need to get dhclient in there somehow unless we switch to our own implementation
     

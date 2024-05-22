@@ -55,7 +55,7 @@ RUN wget -c https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.2
 
 # Build Vanilla and make an AppImage
 CMD git config --global --add safe.directory /vanilla/server/hostap \
-        && cp /vanilla/server/hostap/conf/wpa_supplicant.conf /vanilla/server/hostap/wpa_supplicant/.config \
+        && cp /vanilla/server/hostap/conf/wpa_supplicant.config /vanilla/server/hostap/wpa_supplicant/.config \
         && /usr/local/bin/cmake /vanilla -B/build -G Ninja -DCMAKE_INSTALL_PREFIX=/AppDir/usr \
         && cmake --build /build \
         && cmake --install /build \

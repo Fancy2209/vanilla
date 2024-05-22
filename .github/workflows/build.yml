@@ -18,7 +18,8 @@ jobs:
       run: |
         sudo apt update
         sudo apt install build-essential ninja-build cmake \
-          libgles2-mesa-dev libegl1-mesa-dev nasm desktop-file-utils
+          libgles2-mesa-dev libegl1-mesa-dev nasm desktop-file-utils \
+          libxkbcommon-dev
         sudo apt remove libicu-dev
     
     - name: Restore cached dependencies

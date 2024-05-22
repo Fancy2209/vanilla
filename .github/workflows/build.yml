@@ -8,6 +8,9 @@ on:
     - 'README.md'
 jobs:
   linux:
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v4
@@ -34,7 +37,7 @@ jobs:
       with:
         path: |
           ${{ github.workspace }}/AppDir/usr
-        key: ${{ runner.os }}-x86_64-deps
+        key: ${{ runner.os }}-${{ matrix.arch }}-deps
 
     - name: Install ICU
       if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
@@ -115,8 +118,8 @@ jobs:
       run: |
         cmake --install build
         cp client/com.mattkc.* AppDir/
-        curl -fLOSs https://github.com/AppImage/AppImageKit/releases/download/13/AppRun-x86_64
-        mv AppRun-x86_64 AppDir/AppRun
+        curl -fLOSs https://github.com/AppImage/AppImageKit/releases/download/13/AppRun-${{ matrix.arch }}
+        mv AppRun-${{ matrix.arch }} AppDir/AppRun
         chmod +x AppDir/AppRun
         curl -fLOSs https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
         chmod +x appimagetool-x86_64.AppImage
@@ -126,6 +129,6 @@ jobs:
       uses: actions/upload-artifact@v2.2.1
       with:
         path:
-          Vanilla_U-x86_64.AppImage
+          Vanilla_U-${{ matrix.arch }}.AppImage
 
       

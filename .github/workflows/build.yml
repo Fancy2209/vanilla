@@ -10,114 +10,42 @@ jobs:
   linux:
     strategy:
       matrix:
-        arch: [x86_64, aarch64]
-    runs-on: ubuntu-20.04
+        arch: [x86_64]
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install build-essential ninja-build cmake \
-          libgles2-mesa-dev libegl1-mesa-dev nasm desktop-file-utils \
-          libxkbcommon-x11-dev libx11-xcb-dev  libpulse-dev \
-          libxcb-glx0-dev libxcb-cursor-dev libxcb-icccm4-dev \
-          libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev \
-          libxcb-render0-dev libxcb-render-util0-dev libxcb-shape0-dev \
-          libxcb-shm0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xkb-dev
     
-    - name: Restore cached dependencies
-      id: cached-dependencies-restore
-      uses: actions/cache/restore@v4
+    - name: Set up Docker Buildx
+      id: buildx
+      uses: docker/setup-buildx-action@v1 
+    
+    - name: Setup cache
+      uses: actions/cache@v2
       with:
-        path: |
-          ${{ github.workspace }}/AppDir/usr
-        key: ${{ runner.os }}-${{ matrix.arch }}-deps
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-${{ matrix.arch }}-buildx-${{ hashFiles('**/Dockerfile') }}
     
-    - name: Install Qt 6
-      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
-      run: |
-        git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6
-        cd qt6
-        perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools
-        mkdir qt6-build
-        cd qt6-build
-        ../configure -prefix $GITHUB_WORKSPACE/AppDir/usr -xcb -verbose
-        cmake --build . --parallel
-        cmake --install .
-    
-    # - name: Install SDL2
-    #   if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
-    #   run: |
-    #     git clone --branch release-2.30.3 --depth 1 https://github.com/libsdl-org/SDL.git
-    #     cd SDL
-    #     mkdir build
-    #     cd build
-    #     ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr
-    #     make
-    #     make install
-
-    # - name: Install FFmpeg
-    #   if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
-    #   run: |
-    #     git clone --branch n7.0 --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
-    #     cd ffmpeg
-    #     ./configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-static --disable-avdevice --enable-shared --disable-programs --disable-doc
-    #     make
-    #     make install
-
-    # - name: Install libnl
-    #   if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
-    #   run: |
-    #     git clone --branch libnl3_9_0 --depth 1 https://github.com/thom311/libnl.git
-    #     cd libnl
-    #     autoreconf -i
-    #     mkdir build
-    #     cd build
-    #     ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-debug
-    #     make
-    #     make install
-
-    - name: Save cached dependencies
-      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
-      id: cached-dependencies-save
-      uses: actions/cache/save@v4
+    - name: Build Docker image
+      uses: docker/build-push-action@v2
       with:
-        path: |
-          ${{ github.workspace }}/AppDir/usr
-        key: ${{ steps.cached-dependencies-restore.outputs.cache-primary-key }}
+        file: $GITHUB_WORKSPACE/docker/Dockerfile
+        builder: ${{ steps.buildx.outputs.name }}
+        load: true
+        tags: vanilla_build:latest
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
+    
+    - name: Run Docker container
+      run: docker run -v "$GITHUB_WORKSPACE:/vanilla" vanilla_build:latest
     
     # Need to get dhclient in there somehow unless we switch to our own implementation
-    
-    - name: Configure
-      run: |
-        cmake . -Bbuild -DCMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/AppDir/usr -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/AppDir/usr
-    
-    - name: Build
-      run: |
-        cp server/hostap/conf/wpa_supplicant.config server/hostap/wpa_supplicant/.config
-        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$GITHUB_WORKSPACE/AppDir/usr/lib/pkgconfig
-        export LDFLAGS=-L$GITHUB_WORKSPACE/AppDir/usr/lib
-        cmake --build build
-    
-    - name: Deploy
-      run: |
-        cmake --install build
-        cp client/com.mattkc.* AppDir/
-        curl -fLOSs https://github.com/AppImage/AppImageKit/releases/download/13/AppRun-${{ matrix.arch }}
-        mv AppRun-${{ matrix.arch }} AppDir/AppRun
-        chmod +x AppDir/AppRun
-        curl -fLOSs https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
-        chmod +x appimagetool-x86_64.AppImage
-        ./appimagetool-x86_64.AppImage AppDir
     
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.1
       with:
         path:
-          Vanilla_U-${{ matrix.arch }}.AppImage
-          AppDir/
+          ${{ github.workspace }}/Vanilla_U-${{ matrix.arch }}.AppImage
 
       

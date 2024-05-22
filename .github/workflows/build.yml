@@ -19,7 +19,8 @@ jobs:
         sudo apt update
         sudo apt install build-essential ninja-build cmake \
           libgles2-mesa-dev libegl1-mesa-dev nasm desktop-file-utils \
-          libxkbcommon-x11-dev libx11-xcb-dev libatspi2.0-dev libpulse-dev
+          libxkbcommon-x11-dev libx11-xcb-dev libatspi2.0-dev libpulse-dev \
+          libxcb-glx0-dev libts-dev
         sudo apt remove libicu-dev
     
     - name: Restore cached dependencies

@@ -26,10 +26,7 @@ jobs:
           libxcb-glx0-dev libxcb-cursor-dev libxcb-icccm4-dev \
           libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev \
           libxcb-render0-dev libxcb-render-util0-dev libxcb-shape0-dev \
-          libxcb-shm0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xkb-dev \
-          libxcb-xinput-dev
-
-        sudo apt remove libicu-dev
+          libxcb-shm0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xkb-dev
     
     - name: Restore cached dependencies
       id: cached-dependencies-restore
@@ -38,15 +35,6 @@ jobs:
         path: |
           ${{ github.workspace }}/AppDir/usr
         key: ${{ runner.os }}-${{ matrix.arch }}-deps
-
-    - name: Install ICU
-      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
-      run: |
-        GIT_CLONE_PROTECTION_ACTIVE=false git clone --branch release-71-1 --depth 1 https://github.com/unicode-org/icu.git
-        cd icu/icu4c/source
-        ./configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --enable-rpath
-        make
-        make install
     
     - name: Install Qt 6
       if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
@@ -60,37 +48,37 @@ jobs:
         cmake --build . --parallel
         cmake --install .
     
-    - name: Install SDL2
-      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
-      run: |
-        git clone --branch release-2.30.3 --depth 1 https://github.com/libsdl-org/SDL.git
-        cd SDL
-        mkdir build
-        cd build
-        ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr
-        make
-        make install
+    # - name: Install SDL2
+    #   if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
+    #   run: |
+    #     git clone --branch release-2.30.3 --depth 1 https://github.com/libsdl-org/SDL.git
+    #     cd SDL
+    #     mkdir build
+    #     cd build
+    #     ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr
+    #     make
+    #     make install
 
-    - name: Install FFmpeg
-      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
-      run: |
-        git clone --branch n7.0 --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
-        cd ffmpeg
-        ./configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-static --disable-avdevice --enable-shared --disable-programs --disable-doc
-        make
-        make install
+    # - name: Install FFmpeg
+    #   if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
+    #   run: |
+    #     git clone --branch n7.0 --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
+    #     cd ffmpeg
+    #     ./configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-static --disable-avdevice --enable-shared --disable-programs --disable-doc
+    #     make
+    #     make install
 
-    - name: Install libnl
-      if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
-      run: |
-        git clone --branch libnl3_9_0 --depth 1 https://github.com/thom311/libnl.git
-        cd libnl
-        autoreconf -i
-        mkdir build
-        cd build
-        ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-debug
-        make
-        make install
+    # - name: Install libnl
+    #   if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
+    #   run: |
+    #     git clone --branch libnl3_9_0 --depth 1 https://github.com/thom311/libnl.git
+    #     cd libnl
+    #     autoreconf -i
+    #     mkdir build
+    #     cd build
+    #     ../configure --prefix=$GITHUB_WORKSPACE/AppDir/usr --disable-debug
+    #     make
+    #     make install
 
     - name: Save cached dependencies
       if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
@@ -130,5 +118,6 @@ jobs:
       with:
         path:
           Vanilla_U-${{ matrix.arch }}.AppImage
+          AppDir/
 
       

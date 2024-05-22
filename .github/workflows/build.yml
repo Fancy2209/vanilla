@@ -31,7 +31,7 @@ jobs:
     - name: Install ICU
       if: steps.cached-dependencies-restore.outputs.cache-hit != 'true'
       run: |
-        git clone --branch release-71-1 --depth 1 https://github.com/unicode-org/icu.git
+        GIT_CLONE_PROTECTION_ACTIVE=false git clone --branch release-71-1 --depth 1 https://github.com/unicode-org/icu.git
         cd icu/icu4c/source
         ./configure --prefix=$GITHUB_WORKSPACE/AppDir/usr
         make

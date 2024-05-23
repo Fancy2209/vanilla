@@ -45,7 +45,8 @@ RUN wget -c https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha
 
 # Other dependencies for Vanilla/AppImages
 RUN apt -y install libavcodec-dev libavfilter-dev libavutil-dev \
-        libsdl2-dev libnl-genl-3-dev libssl-dev desktop-file-utils
+        libsdl2-dev libnl-genl-3-dev libssl-dev desktop-file-utils \
+        isc-dhcp-client
 
 # Install latest CMake
 RUN wget -c https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3-linux-x86_64.sh \
@@ -59,7 +60,7 @@ CMD git config --global --add safe.directory /vanilla/server/hostap \
         && /usr/local/bin/cmake /vanilla -B/build -G Ninja -DCMAKE_INSTALL_PREFIX=/AppDir/usr \
         && cmake --build /build \
         && cmake --install /build \
-        && cp /usr/sbin/dhclient /AppDir/usr/bin \
+        && cp $(which dhclient) /AppDir/usr/bin \
         && cp /usr/lib/x86_64-linux-gnu/libOpenGL.so* /AppDir/usr/lib \
         && linuxdeploy --appdir=/AppDir --plugin qt \
         && appimagetool /AppDir \

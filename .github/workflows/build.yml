@@ -25,7 +25,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-${{ matrix.arch }}-buildx-${{ hashFiles('**/Dockerfile') }}
+        key: ${{ runner.os }}-${{ matrix.arch }}-buildx
     
     - name: Build Docker image
       uses: docker/build-push-action@v5
@@ -39,8 +39,6 @@ jobs:
     
     - name: Run Docker container
       run: docker run -v "$GITHUB_WORKSPACE:/vanilla" vanilla_build:latest
-    
-    # Need to get dhclient in there somehow unless we switch to our own implementation
     
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.1

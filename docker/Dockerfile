@@ -59,6 +59,8 @@ CMD git config --global --add safe.directory /vanilla/server/hostap \
         && /usr/local/bin/cmake /vanilla -B/build -G Ninja -DCMAKE_INSTALL_PREFIX=/AppDir/usr \
         && cmake --build /build \
         && cmake --install /build \
+        && cp $(which dhclient) /AppDir/usr/bin \
+        && cp /usr/lib/x86_64-linux-gnu/libOpenGL.so* /AppDir/usr/lib \
         && linuxdeploy --appdir=/AppDir --plugin qt \
         && appimagetool /AppDir \
         && mv Vanilla*.AppImage /vanilla

@@ -43,7 +43,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: /tmp/.buildx-cache
-        key: ${{ steps.restore-cache-action.outputs.cache-primary-key }}
+        key: ${{ runner.os }}-${{ matrix.arch }}-buildx
     
     - name: Run Docker container
       run: docker run --platform ${{ matrix.arch }} -v "$GITHUB_WORKSPACE:/vanilla" vanilla_build:latest

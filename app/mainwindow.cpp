@@ -72,6 +72,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent)
 
         m_connectBtn = new QPushButton(connectionConfigGroupBox);
         m_connectBtn->setCheckable(true);
+        m_connectBtn->setEnabled(vanilla_has_config());
         m_backend = nullptr;
         setConnectedState(false);
         connect(m_connectBtn, &QPushButton::clicked, this, &MainWindow::setConnectedState);
@@ -113,6 +114,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent)
         configLayout->addWidget(new QLabel(tr("Microphone: "), soundConfigGroupBox), row, 0);
 
         m_microphoneComboBox = new QComboBox(soundConfigGroupBox);
+        m_microphoneComboBox->setMaximumWidth(m_microphoneComboBox->fontMetrics().horizontalAdvance(QStringLiteral("SOMEAMOUNTOFTEXT")));
         configLayout->addWidget(m_microphoneComboBox, row, 1);
     }
 
@@ -139,19 +141,28 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent)
 
     configOuterLayout->addStretch();
 
+    m_backend = new Backend();
+    startObjectOnThread(m_backend);
+
+    m_videoDecoder = new VideoDecoder();
+    startObjectOnThread(m_videoDecoder);
+
     m_gamepadHandler = new GamepadHandler();
-    m_gamepadHandlerThread = new QThread(this);
-    m_gamepadHandler->moveToThread(m_gamepadHandlerThread);
-    m_gamepadHandlerThread->start();
-    connect(m_gamepadHandler, &GamepadHandler::gamepadsChanged, this, &MainWindow::populateControllers);
+    startObjectOnThread(m_gamepadHandler);
     QMetaObject::invokeMethod(m_gamepadHandler, &GamepadHandler::run, Qt::QueuedConnection);
 
     m_audioHandler = new AudioHandler();
-    m_audioHandlerThread = new QThread(this);
-    m_audioHandler->moveToThread(m_audioHandlerThread);
-    m_audioHandlerThread->start();
+    startObjectOnThread(m_audioHandler);
     QMetaObject::invokeMethod(m_audioHandler, &AudioHandler::run, Qt::QueuedConnection);
 
+    connect(m_backend, &Backend::videoAvailable, m_videoDecoder, &VideoDecoder::sendPacket);
+    connect(m_backend, &Backend::syncCompleted, this, [this](bool e){if (e) m_connectBtn->setEnabled(true);});
+    connect(m_videoDecoder, &VideoDecoder::frameReady, m_viewer, &Viewer::setImage);
+    connect(m_backend, &Backend::audioAvailable, m_audioHandler, &AudioHandler::write);
+    connect(m_backend, &Backend::vibrate, m_gamepadHandler, &GamepadHandler::vibrate, Qt::DirectConnection);
+    connect(m_viewer, &Viewer::touch, m_backend, &Backend::updateTouch, Qt::DirectConnection);
+    connect(m_gamepadHandler, &GamepadHandler::gamepadsChanged, this, &MainWindow::populateControllers);
+    connect(m_gamepadHandler, &GamepadHandler::buttonStateChanged, m_backend, &Backend::setButton, Qt::DirectConnection);
     connect(m_viewer, &Viewer::keyPressed, m_gamepadHandler, &GamepadHandler::keyPressed, Qt::DirectConnection);
     connect(m_viewer, &Viewer::keyReleased, m_gamepadHandler, &GamepadHandler::keyReleased, Qt::DirectConnection);
 
@@ -168,19 +179,22 @@ MainWindow::~MainWindow()
 {
     QMetaObject::invokeMethod(m_audioHandler, &AudioHandler::close, Qt::QueuedConnection);
     m_audioHandler->deleteLater();
-    m_audioHandlerThread->quit();
-    m_audioHandlerThread->wait();
-    delete m_audioHandlerThread;
 
     m_gamepadHandler->close();
-    m_gamepadHandlerThread->quit();
-    m_gamepadHandlerThread->wait();
-    delete m_gamepadHandler;
-    delete m_gamepadHandlerThread;
+    m_gamepadHandler->deleteLater();
+
+    m_videoDecoder->deleteLater();
+
+    m_backend->interrupt();
+    m_backend->deleteLater();
+
+    for (QThread *t : m_threadMap) {
+        t->quit();
+        t->wait();
+        delete t;
+    }
 
     SDL_Quit();
-
-    setConnectedState(false);
 
     delete m_viewer;
 }
@@ -256,7 +270,7 @@ void MainWindow::populateControllers()
 void MainWindow::showSyncDialog()
 {
     SyncDialog *d = new SyncDialog(this);
-    d->setup(m_wirelessInterfaceComboBox->currentText());
+    d->setup(m_backend, m_wirelessInterfaceComboBox->currentText());
     connect(d, &SyncDialog::finished, d, &SyncDialog::deleteLater);
     d->open();
 }
@@ -268,46 +282,13 @@ void MainWindow::setConnectedState(bool on)
     if (on) {
         m_connectBtn->setText(tr("Disconnect"));
 
-        m_backendThread = new QThread(this);
-        m_videoDecoderThread = new QThread(this);
-        
-        m_backend = new Backend();
-        m_videoDecoder = new VideoDecoder();
-
-        connect(m_backend, &Backend::videoAvailable, m_videoDecoder, &VideoDecoder::sendPacket);
-        connect(m_videoDecoder, &VideoDecoder::frameReady, m_viewer, &Viewer::setImage);
-        connect(m_backend, &Backend::audioAvailable, m_audioHandler, &AudioHandler::write);
-        connect(m_backend, &Backend::vibrate, m_gamepadHandler, &GamepadHandler::vibrate, Qt::DirectConnection);
-        connect(m_viewer, &Viewer::touch, m_backend, &Backend::updateTouch, Qt::DirectConnection);
-
-        m_backend->moveToThread(m_backendThread);
-        m_videoDecoder->moveToThread(m_videoDecoderThread);
-
-        m_videoDecoderThread->start();
-        m_backendThread->start();
-
         QMetaObject::invokeMethod(m_backend, &Backend::connectToConsole, Qt::QueuedConnection, m_wirelessInterfaceComboBox->currentText());
     } else {
-        m_connectBtn->setText(tr("Connect"));
-
         if (m_backend) {
             m_backend->interrupt();
-
-            m_backend->deleteLater();
-            m_backend = nullptr;
-
-            m_videoDecoderThread->deleteLater();
-            m_videoDecoder = nullptr;
-
-            m_backendThread->quit();
-            m_videoDecoderThread->quit();
-
-            m_backendThread->wait();
-            m_videoDecoderThread->wait();
-
-            m_backendThread->deleteLater();
-            m_videoDecoderThread->deleteLater();
         }
+
+        m_connectBtn->setText(tr("Connect"));
 
         m_viewer->setImage(QImage());
     }
@@ -341,4 +322,12 @@ void MainWindow::showInputConfigDialog()
 {
     InputConfigDialog *d = new InputConfigDialog(this);
     d->open();
+}
+
+void MainWindow::startObjectOnThread(QObject *object)
+{
+    QThread *thread = new QThread(this);
+    object->moveToThread(thread);
+    thread->start();
+    m_threadMap.insert(object, thread);
 }

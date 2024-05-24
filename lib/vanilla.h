@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -75,6 +76,11 @@ int vanilla_sync_with_console(const char *wireless_interface, uint16_t code);
 int vanilla_connect_to_console(const char *wireless_interface, vanilla_event_handler_t event_handler, void *context);
 
 /**
+ * Determine if we have a configuration file that we can connect with.
+ */
+int vanilla_has_config();
+
+/**
  * Attempt to stop the current action
  * 
  * This can be called from another thread to safely exit a blocking call to vanilla_sync_with_console() or vanilla_connect_to_console().
@@ -100,6 +106,18 @@ void vanilla_set_button(int button, int16_t value);
  * If either `x` or `y` are -1, this point will be disabled.
  */
 void vanilla_set_touch(int x, int y);
+
+/**
+ * Logging function
+ */
+void vanilla_log(const char *format, ...);
+void vanilla_log_no_newline(const char *format, ...);
+void vanilla_log_no_newline_va(const char *format, va_list args);
+
+/**
+ * Install custom logger
+ */
+void vanilla_install_logger(void (*logger)(const char *, va_list args));
 
 #if defined(__cplusplus)
 }

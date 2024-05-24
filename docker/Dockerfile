@@ -1,5 +1,7 @@
 FROM ubuntu:20.04
 
+ARG TARGETARCH
+
 # Update apt
 RUN apt -y update
 
@@ -13,6 +15,38 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC \
                 libxcb-render0-dev libxcb-render-util0-dev libxcb-shape0-dev \
                 libxcb-shm0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xkb-dev
 
+# Install latest CMake
+RUN apt -y install wget
+RUN if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
+        && wget -c https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3-linux-${ARCH}.sh \
+        && chmod +x cmake-3.29.3-linux-${ARCH}.sh \
+        && ./cmake-3.29.3-linux-${ARCH}.sh --skip-license --prefix=/usr/local \
+        && rm cmake-3.29.3-linux-${ARCH}.sh
+
+# Install appimagetool
+RUN apt -y install pkg-config libgpgme-dev libgcrypt-dev libglib2.0-dev libcurl-ocaml-dev squashfs-tools desktop-file-utils
+RUN git clone https://github.com/AppImage/appimagetool.git \
+        && cd appimagetool \
+        && mkdir build \
+        && cd build \
+        && cmake .. -G Ninja \
+        && ninja install
+
+# Get linuxdeploy and Qt plugin
+RUN apt -y install p7zip-full
+RUN if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
+        && wget -c https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20240109-1/linuxdeploy-plugin-qt-${ARCH}.AppImage \
+        && 7z x -oAppDir linuxdeploy-plugin-qt-${ARCH}.AppImage \
+        && chmod +x AppDir/usr/bin/* \
+        && cp -R AppDir/usr/* /usr/local \
+        && rm -r linuxdeploy-plugin-qt-${ARCH}.AppImage AppDir
+RUN if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
+        && wget -c https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20240109-1/linuxdeploy-${ARCH}.AppImage \
+        && 7z x -oAppDir linuxdeploy-${ARCH}.AppImage \
+        && chmod +x AppDir/usr/bin/* \
+        && cp -R AppDir/usr/* /usr/local \
+        && rm -r linuxdeploy-${ARCH}.AppImage AppDir
+
 # Build Qt 6
 RUN git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6 \
     && cd qt6 \
@@ -25,43 +59,20 @@ RUN git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6 \
     && cd .. \
     && rm -rf qt6
 
-# Get linuxdeploy and appimagetool
-RUN apt -y install wget
-RUN wget -c https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
-        && chmod +x appimagetool-x86_64.AppImage \
-        && ./appimagetool-x86_64.AppImage --appimage-extract \
-        && cp -R squashfs-root/usr/* /usr/local \
-        && rm -r appimagetool-x86_64.AppImage squashfs-root
-RUN wget -c https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20240109-1/linuxdeploy-plugin-qt-x86_64.AppImage \
-        && chmod +x linuxdeploy-plugin-qt-x86_64.AppImage \
-        && ./linuxdeploy-plugin-qt-x86_64.AppImage --appimage-extract \
-        && cp -R squashfs-root/usr/* /usr/local \
-        && rm -r linuxdeploy-plugin-qt-x86_64.AppImage squashfs-root
-RUN wget -c https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20240109-1/linuxdeploy-x86_64.AppImage \
-        && chmod +x linuxdeploy-x86_64.AppImage \
-        && ./linuxdeploy-x86_64.AppImage --appimage-extract \
-        && cp -R squashfs-root/usr/* /usr/local \
-        && rm -r linuxdeploy-x86_64.AppImage squashfs-root
-
 # Other dependencies for Vanilla/AppImages
 RUN apt -y install libavcodec-dev libavfilter-dev libavutil-dev \
-        libsdl2-dev libnl-genl-3-dev libssl-dev desktop-file-utils \
+        libsdl2-dev libnl-genl-3-dev libssl-dev \
         isc-dhcp-client
 
-# Install latest CMake
-RUN wget -c https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3-linux-x86_64.sh \
-        && chmod +x cmake-3.29.3-linux-x86_64.sh \
-        && ./cmake-3.29.3-linux-x86_64.sh --skip-license --prefix=/usr/local \
-        && rm cmake-3.29.3-linux-x86_64.sh
-
 # Build Vanilla and make an AppImage
-CMD git config --global --add safe.directory /vanilla/server/hostap \
+CMD if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
+        && git config --global --add safe.directory /vanilla/server/hostap \
         && cp /vanilla/server/hostap/conf/wpa_supplicant.config /vanilla/server/hostap/wpa_supplicant/.config \
         && /usr/local/bin/cmake /vanilla -B/build -G Ninja -DCMAKE_INSTALL_PREFIX=/AppDir/usr \
         && cmake --build /build \
         && cmake --install /build \
         && cp $(which dhclient) /AppDir/usr/bin \
-        && cp /usr/lib/x86_64-linux-gnu/libOpenGL.so* /AppDir/usr/lib \
+        && cp /usr/lib/${ARCH}-linux-gnu/libOpenGL.so* /AppDir/usr/lib \
         && linuxdeploy --appdir=/AppDir --plugin qt \
         && appimagetool /AppDir \
         && mv Vanilla*.AppImage /vanilla

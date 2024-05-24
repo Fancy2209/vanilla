@@ -120,6 +120,7 @@ void Backend::connectToConsole(const QString &wirelessInterface)
                 read(m_pipeIn, &data_size, sizeof(data_size));
 
                 void *buf = malloc(data_size);
+                read(m_pipeIn, buf, data_size);
 
                 vanillaEventHandler(this, cc, (const char *) buf, data_size);
 

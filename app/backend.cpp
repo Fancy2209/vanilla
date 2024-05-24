@@ -23,7 +23,7 @@ void vanillaEventHandler(void *context, int type, const char *data, size_t dataL
         emit backend->audioAvailable(QByteArray(data, dataLength));
         break;
     case VANILLA_EVENT_VIBRATE:
-        emit backend->vibrate(data != nullptr);
+        emit backend->vibrate(*data);
         break;
     }
 }

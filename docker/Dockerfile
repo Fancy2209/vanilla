@@ -16,12 +16,14 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC \
                 libxcb-shm0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xkb-dev
 
 # Install latest CMake
-RUN apt -y install wget
-RUN if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
-        && wget -c https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3-linux-${ARCH}.sh \
-        && chmod +x cmake-3.29.3-linux-${ARCH}.sh \
-        && ./cmake-3.29.3-linux-${ARCH}.sh --skip-license --prefix=/usr/local \
-        && rm cmake-3.29.3-linux-${ARCH}.sh
+RUN git clone --depth 1 --branch v3.29.3 https://gitlab.kitware.com/cmake/cmake.git \
+        && cd cmake \
+        && mkdir build \
+        && cd build \
+        && cmake .. -G Ninja \
+        && ninja install \
+        && cd ../.. \
+        && rm -rf cmake
 
 # Install appimagetool
 RUN apt -y install pkg-config libgpgme-dev libgcrypt-dev libglib2.0-dev libcurl-ocaml-dev squashfs-tools desktop-file-utils
@@ -30,10 +32,12 @@ RUN git clone https://github.com/AppImage/appimagetool.git \
         && mkdir build \
         && cd build \
         && cmake .. -G Ninja \
-        && ninja install
+        && ninja install \
+        && cd ../.. \
+        && rm -rf appimagetool
 
 # Get linuxdeploy and Qt plugin
-RUN apt -y install p7zip-full
+RUN apt -y install wget p7zip-full
 RUN if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
         && wget -c https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20240109-1/linuxdeploy-plugin-qt-${ARCH}.AppImage \
         && 7z x -oAppDir linuxdeploy-plugin-qt-${ARCH}.AppImage \

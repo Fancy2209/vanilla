@@ -7,9 +7,9 @@ RUN apt -y update
 
 # Dependencies for Qt 6
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC \
-        apt -y install build-essential ninja-build cmake git \
+        apt -y install build-essential ninja-build libssl-dev git \
                 libgles2-mesa-dev libegl1-mesa-dev libfontconfig-dev \
-                libxkbcommon-x11-dev libx11-xcb-dev  libpulse-dev \
+                libxkbcommon-x11-dev libx11-xcb-dev libpulse-dev \
                 libxcb-glx0-dev libxcb-cursor-dev libxcb-icccm4-dev \
                 libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev \
                 libxcb-render0-dev libxcb-render-util0-dev libxcb-shape0-dev \
@@ -20,8 +20,8 @@ RUN git clone --depth 1 --branch v3.29.3 https://gitlab.kitware.com/cmake/cmake.
         && cd cmake \
         && mkdir build \
         && cd build \
-        && cmake .. -G Ninja \
-        && ninja install \
+        && ../configure \
+        && make install \
         && cd ../.. \
         && rm -rf cmake
 
@@ -65,7 +65,7 @@ RUN git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6 \
 
 # Other dependencies for Vanilla/AppImages
 RUN apt -y install libavcodec-dev libavfilter-dev libavutil-dev \
-        libsdl2-dev libnl-genl-3-dev libssl-dev \
+        libsdl2-dev libnl-genl-3-dev \
         isc-dhcp-client
 
 # Build Vanilla and make an AppImage

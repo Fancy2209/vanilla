@@ -143,8 +143,6 @@ void Backend::updateTouch(int x, int y)
         write(m_pipeOut, &x, sizeof(x));
         write(m_pipeOut, &y, sizeof(y));
         m_pipeMutex.unlock();
-        
-        ignoreByte(m_pipeIn);
     } else {
         vanilla_set_touch(x, y);
     }
@@ -159,8 +157,6 @@ void Backend::setButton(int button, int16_t value)
         write(m_pipeOut, &buttonSized, sizeof(buttonSized));
         write(m_pipeOut, &value, sizeof(value));
         m_pipeMutex.unlock();
-
-        ignoreByte(m_pipeIn);
     } else {
         vanilla_set_button(button, value);
     }

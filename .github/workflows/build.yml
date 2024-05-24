@@ -10,7 +10,7 @@ jobs:
   linux:
     strategy:
       matrix:
-        arch: [x86_64]
+        arch: [ x86_64, aarch64 ]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -36,9 +36,10 @@ jobs:
         tags: vanilla_build:latest
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache
+        platforms: ${{ matrix.arch }}
     
     - name: Run Docker container
-      run: docker run -v "$GITHUB_WORKSPACE:/vanilla" vanilla_build:latest
+      run: docker run --platform ${{ matrix.arch }} -v "$GITHUB_WORKSPACE:/vanilla" vanilla_build:latest
     
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.1

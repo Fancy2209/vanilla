@@ -66,8 +66,8 @@ RUN apt -y install libavcodec-dev libavfilter-dev libavutil-dev \
 
 # Build Vanilla and make an AppImage
 CMD if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
-        && git config --global --add safe.directory /vanilla/server/hostap \
-        && cp /vanilla/server/hostap/conf/wpa_supplicant.config /vanilla/server/hostap/wpa_supplicant/.config \
+        && git config --global --add safe.directory /vanilla/lib/hostap \
+        && cp /vanilla/lib/hostap/conf/wpa_supplicant.config /vanilla/lib/hostap/wpa_supplicant/.config \
         && /usr/local/bin/cmake /vanilla -B/build -G Ninja -DCMAKE_INSTALL_PREFIX=/AppDir/usr \
         && cmake --build /build \
         && cmake --install /build \

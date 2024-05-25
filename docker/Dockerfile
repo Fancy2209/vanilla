@@ -5,17 +5,9 @@ ARG TARGETARCH
 # Update apt
 RUN apt -y update
 
-# Dependencies for Qt 6
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC \
-        apt -y install build-essential ninja-build libssl-dev git \
-                libgles2-mesa-dev libegl1-mesa-dev libfontconfig-dev \
-                libxkbcommon-x11-dev libx11-xcb-dev libpulse-dev \
-                libxcb-glx0-dev libxcb-cursor-dev libxcb-icccm4-dev \
-                libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev \
-                libxcb-render0-dev libxcb-render-util0-dev libxcb-shape0-dev \
-                libxcb-shm0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xkb-dev
-
 # Install latest CMake
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC \
+        apt -y install build-essential ninja-build libssl-dev git tzdata
 RUN git clone --depth 1 --branch v3.29.3 https://gitlab.kitware.com/cmake/cmake.git \
         && cd cmake \
         && mkdir build \
@@ -26,7 +18,9 @@ RUN git clone --depth 1 --branch v3.29.3 https://gitlab.kitware.com/cmake/cmake.
         && rm -rf cmake
 
 # Install appimagetool
-RUN apt -y install pkg-config libgpgme-dev libgcrypt-dev libglib2.0-dev libcurl-ocaml-dev squashfs-tools desktop-file-utils
+RUN apt -y install pkg-config libgpgme-dev libgcrypt-dev \
+        libglib2.0-dev libcurl-ocaml-dev squashfs-tools \
+        desktop-file-utils
 RUN git clone https://github.com/AppImage/appimagetool.git \
         && cd appimagetool \
         && mkdir build \
@@ -36,25 +30,38 @@ RUN git clone https://github.com/AppImage/appimagetool.git \
         && cd ../.. \
         && rm -rf appimagetool
 
-# Get linuxdeploy and Qt plugin
-RUN apt -y install wget p7zip-full
-RUN if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
-        && wget -c https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20240109-1/linuxdeploy-plugin-qt-${ARCH}.AppImage \
-        && 7z x -oAppDir linuxdeploy-plugin-qt-${ARCH}.AppImage \
-        && chmod +x AppDir/usr/bin/* \
-        && cp -R AppDir/usr/* /usr/local \
-        && rm -r linuxdeploy-plugin-qt-${ARCH}.AppImage AppDir
-RUN if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
-        && wget -c https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20240109-1/linuxdeploy-${ARCH}.AppImage \
-        && 7z x -oAppDir linuxdeploy-${ARCH}.AppImage \
-        && chmod +x AppDir/usr/bin/* \
-        && cp -R AppDir/usr/* /usr/local \
-        && rm -r linuxdeploy-${ARCH}.AppImage AppDir
+# Get linuxdeploy
+RUN apt -y install patchelf libturbojpeg0-dev wget cimg-dev libpng-dev
+RUN git clone --recursive https://github.com/linuxdeploy/linuxdeploy.git \
+        && cd linuxdeploy \
+        && mkdir build \
+        && cd build \
+        && cmake .. -G Ninja \
+        && ninja install \
+        && cd ../.. \
+        && rm -rf linuxdeploy
+
+# Get linuxdeploy-plugin-qt
+RUN apt -y install nlohmann-json3-dev
+RUN git clone --recursive https://github.com/linuxdeploy/linuxdeploy-plugin-qt.git \
+        && cd linuxdeploy-plugin-qt \
+        && mkdir build \
+        && cd build \
+        && cmake .. -G Ninja \
+        && ninja install \
+        && cd ../.. \
+        && rm -rf linuxdeploy-plugin-qt
 
 # Build Qt 6
+RUN apt -y install libgles2-mesa-dev libegl1-mesa-dev libfontconfig-dev \
+        libxkbcommon-x11-dev libx11-xcb-dev libpulse-dev \
+        libxcb-glx0-dev libxcb-cursor-dev libxcb-icccm4-dev \
+        libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev \
+        libxcb-render0-dev libxcb-render-util0-dev libxcb-shape0-dev \
+        libxcb-shm0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xkb-dev
 RUN git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6 \
     && cd qt6 \
-    && perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools \
+    && perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools,qtquick3d,qtdeclarative \
     && mkdir qt6-build \
     && cd qt6-build \
     && ../configure -xcb -verbose -prefix /usr/local \

@@ -61,7 +61,7 @@ RUN apt -y install libgles2-mesa-dev libegl1-mesa-dev libfontconfig-dev \
         libxcb-shm0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xkb-dev
 RUN git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6 \
     && cd qt6 \
-    && perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools,qtquick3d,qtdeclarative \
+    && perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools \
     && mkdir qt6-build \
     && cd qt6-build \
     && ../configure -xcb -verbose -prefix /usr/local \

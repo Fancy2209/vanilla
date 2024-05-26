@@ -64,7 +64,7 @@ RUN git clone --branch 6.7.1 --depth 1 git://code.qt.io/qt/qt5.git qt6 \
     && perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools \
     && mkdir qt6-build \
     && cd qt6-build \
-    && ../configure -xcb -verbose -prefix /usr/local \
+    && ../configure -xcb -verbose -no-feature-ffmpeg -prefix /usr/local \
     && cmake --build . --parallel \
     && cmake --install . \
     && cd .. \

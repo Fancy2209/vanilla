@@ -1,7 +1,5 @@
 FROM ubuntu:20.04
 
-ARG TARGETARCH
-
 # Update apt
 RUN apt -y update
 
@@ -76,14 +74,13 @@ RUN apt -y install libavcodec-dev libavfilter-dev libavutil-dev \
         isc-dhcp-client
 
 # Build Vanilla and make an AppImage
-CMD if [ "$TARGETARCH" = "arm64" ]; then ARCH=aarch64; else ARCH=x86_64; fi \
-        && git config --global --add safe.directory /vanilla/lib/hostap \
+CMD git config --global --add safe.directory /vanilla/lib/hostap \
         && cp /vanilla/lib/hostap/conf/wpa_supplicant.config /vanilla/lib/hostap/wpa_supplicant/.config \
         && /usr/local/bin/cmake /vanilla -B/build -G Ninja -DCMAKE_INSTALL_PREFIX=/AppDir/usr \
         && cmake --build /build \
         && cmake --install /build \
         && cp $(which dhclient) /AppDir/usr/bin \
-        && cp /usr/lib/${ARCH}-linux-gnu/libOpenGL.so* /AppDir/usr/lib \
+        && cp /usr/lib/$(uname -m)-linux-gnu/libOpenGL.so* /AppDir/usr/lib \ # Ubuntu complains about this missing but supposedly it's a system lib we shouldn't be including?
         && linuxdeploy --appdir=/AppDir --plugin qt \
         && appimagetool /AppDir \
         && mv Vanilla*.AppImage /vanilla

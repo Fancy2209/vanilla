@@ -10,7 +10,7 @@ jobs:
   linux:
     strategy:
       matrix:
-        arch: [ x86_64, arm, aarch64 ]
+        arch: [ x86_64, aarch64 ]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4

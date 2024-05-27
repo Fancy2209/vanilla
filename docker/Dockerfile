@@ -80,7 +80,7 @@ CMD git config --global --add safe.directory /vanilla/lib/hostap \
         && cmake --build /build \
         && cmake --install /build \
         && cp $(which dhclient) /AppDir/usr/bin \
-        && cp /usr/lib/$(uname -m)-linux-gnu/libOpenGL.so* /AppDir/usr/lib \ # Ubuntu complains about this missing but supposedly it's a system lib we shouldn't be including?
+        && cp /usr/lib/$(uname -m)-linux-gnu/libOpenGL.so* /AppDir/usr/lib # Ubuntu complains about this missing but supposedly it's a system lib we shouldn't be including? \
         && linuxdeploy --appdir=/AppDir --plugin qt \
         && appimagetool /AppDir \
         && mv Vanilla*.AppImage /vanilla

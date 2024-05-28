@@ -21,9 +21,9 @@ jobs:
       run: docker run --platform ${{ matrix.arch }} -v "$GITHUB_WORKSPACE:/vanilla" itsmattkc/vanilla-u-build:x86_64-latest
     
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.1
+      uses: actions/upload-artifact@v4
       with:
-        path:
-          ${{ github.workspace }}/Vanilla_U-${{ matrix.arch }}.tar.gz
+        name: Vanilla U (${{ matrix.arch }})
+        path: ${{ github.workspace }}/Vanilla_U-${{ matrix.arch }}.tar.gz
 
       

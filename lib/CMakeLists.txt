@@ -31,7 +31,7 @@ add_custom_target(
 )
 add_custom_target(
     wpa_supplicant_build
-    COMMAND make && cp wpa_supplicant wpa_supplicant_drc
+    COMMAND make -j$$(nproc) && cp wpa_supplicant wpa_supplicant_drc
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/hostap/wpa_supplicant"
     BYPRODUCTS "${CMAKE_CURRENT_SOURCE_DIR}/hostap/wpa_supplicant/wpa_supplicant_drc"
     USES_TERMINAL
